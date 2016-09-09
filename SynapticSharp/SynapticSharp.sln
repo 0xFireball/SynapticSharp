@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SynapticSharp", "SynapticSharp\SynapticSharp.csproj", "{94FBED9F-8D5D-43BD-90DA-91992AAB5C08}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SynapticSharp.Demo", "SynapticSharp.Demo\SynapticSharp.Demo.csproj", "{19C19E6D-04FA-4930-975F-5C7029137DFA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{94FBED9F-8D5D-43BD-90DA-91992AAB5C08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94FBED9F-8D5D-43BD-90DA-91992AAB5C08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94FBED9F-8D5D-43BD-90DA-91992AAB5C08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94FBED9F-8D5D-43BD-90DA-91992AAB5C08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19C19E6D-04FA-4930-975F-5C7029137DFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19C19E6D-04FA-4930-975F-5C7029137DFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19C19E6D-04FA-4930-975F-5C7029137DFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19C19E6D-04FA-4930-975F-5C7029137DFA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
