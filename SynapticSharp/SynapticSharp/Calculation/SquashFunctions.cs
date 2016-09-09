@@ -1,12 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SynapticSharp.Calculation
 {
-    class SquashFunctions
+    public class SquashFunctions
     {
+        public static Func<double, bool, double> Logistic = (x, derivate) =>
+        {
+            if (!derivate)
+            {
+                return 1 / (1 + Math.Exp(-x));
+            }
+            var fx = Logistic(x, false);
+            return fx * (1 - fx);
+        };
+
+
     }
 }
