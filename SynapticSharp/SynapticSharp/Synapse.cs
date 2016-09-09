@@ -5,7 +5,7 @@ namespace SynapticSharp
     /// <summary>
     /// Represents a connection from one neuron to another
     /// </summary>
-    public class Synapse : ISynapse
+    public class Synapse
     {
         protected int _id = NeuronIdentification.Uid;
         protected Neuron _sourceNeuron;

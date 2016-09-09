@@ -41,9 +41,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Calculation\SquashFunctions.cs" />
-    <Compile Include="INeuron.cs" />
-    <Compile Include="ISynapse.cs" />
     <Compile Include="Neuron.cs" />
+    <Compile Include="NeuronProperties\ConnectedNeuronLocation.cs" />
+    <Compile Include="NeuronProperties\ConnectedNeuronType.cs" />
     <Compile Include="NeuronProperties\NeuronConnectionSet.cs" />
     <Compile Include="NeuronProperties\NeuronError.cs" />
     <Compile Include="NeuronProperties\NeuronIdentification.cs" />

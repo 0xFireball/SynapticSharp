@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace SynapticSharp
 {
-    public class Neuron : INeuron
+    public class Neuron
     {
         protected int _id = NeuronIdentification.Uid;
         protected object _label = null;
@@ -22,7 +22,9 @@ namespace SynapticSharp
         protected double _derivative;
 
         public int Id => _id;
+        public NeuronConnectionSet Connections => _connections;
         public NeuronError Error => _error;
+        public NeuronTrace Trace => _trace;
         public double State => _state;
         public double Old => _old;
         public double Activation => _activation;
@@ -187,9 +189,90 @@ namespace SynapticSharp
             _bias += rate * _error.Responsibility;
         }
 
-        public void Project()
+        public Synapse Project(Neuron targetNeuron, double weight = 0)
         {
-            throw new NotImplementedException();
+            // self-connection
+            if (targetNeuron == this)
+            {
+                _selfconnection.Weight = 1;
+                return _selfconnection;
+            }
+
+            Synapse connection; //the new connection
+
+            // check if connection already exists
+            var connected = this.Connected(targetNeuron);
+            if (connected != null && connected.Type == ConnectedNeuronType.Projected)
+            {
+                // update connection
+                if (weight > 0)
+                    connected.Connection.Weight = weight;
+                // return existing connection
+                return connected.Connection;
+            }
+            else
+            {
+                // create a new connection
+                connection = new Synapse(this, targetNeuron, weight);
+            }
+
+            // reference all the connections and traces
+            _connections.Projected[connection.Id] = connection;
+            _neighbors[targetNeuron.Id] = targetNeuron;
+            targetNeuron.Connections.Inputs[connection.Id] = connection;
+            targetNeuron.Trace.Eligibility[connection.Id] = 0;
+
+            for (var id = 0; id < targetNeuron.Trace.Extended.Count; id++)
+            {
+                var trace = targetNeuron.Trace.Extended[id];
+                trace[connection.Id] = 0;
+            }
+
+            return connection;
         }
+
+        protected ConnectedNeuronLocation Connected(Neuron targetNeuron)
+        {
+            var result = new ConnectedNeuronLocation();
+            if (this == targetNeuron)
+            {
+                if (IsSelfConnected)
+                {
+                    result.Type = ConnectedNeuronType.SelfConnection;
+                    result.Connection = SelfConnection;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            var allConnections = new[] { Connections.Gated, Connections.Inputs, Connections.Projected };
+            foreach (var allConnectionsOfType in allConnections)
+            {
+                var type = (ConnectedNeuronType?)(Array.IndexOf(allConnections, allConnectionsOfType) + 1);
+                foreach (var connection in allConnectionsOfType)
+                {
+                    if (connection.Target == targetNeuron)
+                    {
+                        result.Type = type;
+                        result.Connection = connection;
+                        return result;
+                    }
+                    else if (connection.Source == targetNeuron)
+                    {
+                        result.Type = type;
+                        result.Connection = connection;
+                        return result;
+                    }
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Returns true or false, whether the neuron is self-connected or not
+        /// </summary>
+        public bool IsSelfConnected => _selfconnection.Weight > 0;
     }
 }
