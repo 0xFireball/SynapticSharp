@@ -40,7 +40,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ActivationNeuron.cs" />
     <Compile Include="Calculation\SquashFunctions.cs" />
     <Compile Include="INeuron.cs" />
     <Compile Include="ISynapse.cs" />

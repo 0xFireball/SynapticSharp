@@ -11,8 +11,15 @@ namespace SynapticSharp
         protected Neuron _sourceNeuron;
         protected Neuron _targetNeuron;
         protected double _weight;
-        protected double _gain = 1;
-        protected object _gater = null;
+        private double _gain = 1;
+        protected Neuron _gater = null;
+
+        public int Id => _id;
+        public Neuron Source => _sourceNeuron;
+        public Neuron Target => _targetNeuron;
+        public Neuron Gater => _gater;
+        public double Gain { get { return _gain; } set { _gain = value; } }
+        public double Weight => _weight;
 
         public Synapse(Neuron sourceNeuron, Neuron targetNeuron)
         {

@@ -2,7 +2,8 @@
 {
     public interface INeuron
     {
-        void Activate();
+        double Activate();
+        double Activate(double input);
         void Propagate();
         void Project();
     }
