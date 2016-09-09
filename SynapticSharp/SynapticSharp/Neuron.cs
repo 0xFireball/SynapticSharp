@@ -11,23 +11,24 @@ namespace SynapticSharp
         protected object _label = null;
         protected NeuronConnectionSet _connections = new NeuronConnectionSet();
         protected NeuronError _error = new NeuronError();
-        protected NeuronTrace trace = new NeuronTrace();
+        protected NeuronTrace _trace = new NeuronTrace();
         protected double _state = 0;
         protected double _old = 0;
         protected double _activation = 0;
         protected Synapse _selfconnection;
         protected Func<double, bool, double> _squash = SquashFunctions.Logistic;
         protected List<Neuron> _neighbors = new List<Neuron>();
-        protected double _bais = NeuronIdentification.Rng.NextDouble() * .2 - .1;
+        protected double _bias = NeuronIdentification.Rng.NextDouble() * .2 - .1;
+        protected double _derivative;
 
         public int Id => _id;
+        public NeuronError Error => _error;
         public double State => _state;
+        public double Old => _old;
         public double Activation => _activation;
-        public double Bias => _bais;
+        public double Bias => _bias;
         public List<Neuron> Neighbors => _neighbors;
         public Synapse SelfConnection => _selfconnection;
-
-        protected double derivative;
 
         public Neuron()
         {
@@ -40,7 +41,7 @@ namespace SynapticSharp
             _old = _state;
 
             //eq. 15
-            _state = _selfconnection.Gain * _selfconnection.Weight * _state + _bais;
+            _state = _selfconnection.Gain * _selfconnection.Weight * _state + _bias;
 
             for (var i = 0; i < _connections.Inputs.Count; i++)
             {
@@ -52,11 +53,11 @@ namespace SynapticSharp
             _activation = _squash(_state, false);
 
             //f'(s)
-            derivative = _squash(_state, true);
+            _derivative = _squash(_state, true);
 
             //update traces
             var influences = new Dictionary<int, double>();
-            for (var i = 0; i < trace.Extended.Keys.Count; i++)
+            for (var i = 0; i < _trace.Extended.Keys.Count; i++)
             {
                 // extended elegibility trace
                 var neuron = _neighbors[i];
@@ -65,10 +66,10 @@ namespace SynapticSharp
                 var influence = neuron._selfconnection.Gater == this ? neuron._old : 0;
 
                 // index runs over all the incoming connections to the gated neuron that are gated by this unit
-                for (var incoming = 0; incoming < trace.Influences[neuron.Id].Count; incoming++)
+                for (var incoming = 0; incoming < _trace.Influences[neuron.Id].Count; incoming++)
                 { // captures the effect that has an input connection to this unit, on a neuron that is gated by this unit
-                    influence += trace.Influences[neuron.Id][incoming].Weight *
-                      trace.Influences[neuron.Id][incoming].Source.Activation;
+                    influence += _trace.Influences[neuron.Id][incoming].Weight *
+                      _trace.Influences[neuron.Id][incoming].Source.Activation;
                 }
                 influences[neuron.Id] = influence;
             }
@@ -78,19 +79,19 @@ namespace SynapticSharp
                 var input = _connections.Inputs[i];
 
                 // elegibility trace - Eq. 17
-                trace.Eligibility[input.Id] = _selfconnection.Gain * _selfconnection.Weight *
-                    trace.Eligibility[input.Id] + input.Gain * input.Source.Activation;
+                _trace.Eligibility[input.Id] = _selfconnection.Gain * _selfconnection.Weight *
+                    _trace.Eligibility[input.Id] + input.Gain * input.Source.Activation;
 
-                for (var id = 0; i < trace.Extended.Count; i++)
+                for (var id = 0; i < _trace.Extended.Count; i++)
                 {
                     // extended elegibility trace
-                    var xtrace = trace.Extended[id];
+                    var xtrace = _trace.Extended[id];
                     var neuron = Neighbors[id];
                     var influence = influences[neuron.Id];
 
                     // eq. 18
                     xtrace[input.Id] = neuron.SelfConnection.Gain * neuron.SelfConnection.Weight *
-                        xtrace[input.Id] + derivative * trace.Eligibility[
+                        xtrace[input.Id] + _derivative * _trace.Eligibility[
                         input.Id] * influence;
                 }
             }
@@ -107,8 +108,8 @@ namespace SynapticSharp
         public double Activate(double input)
         {
             _activation = input;
-            derivative = 0;
-            _bais = 0;
+            _derivative = 0;
+            _bias = 0;
             return _activation;
         }
 
@@ -127,8 +128,63 @@ namespace SynapticSharp
             // output neurons get their error from the enviroment
             if (isOutput)
             {
-                _error.Responsibility = _error.Projected = target - this.Activation; // Eq. 10
+                _error.Responsibility = _error.Projected = target - _activation; // Eq. 10
             }
+            else // the rest of the neuron compute their error responsibilities by backpropagation
+            {
+                // error responsibilities from all the connections pr+ojected from this neuron
+                for (var id = 0; id < _connections.Projected.Count; id++)
+                {
+                    var connection = _connections.Projected[id];
+                    var neuron = connection.Target;
+                    // Eq. 21
+                    error += neuron.Error.Responsibility * connection.Gain * connection.Weight;
+                }
+
+                // projected error responsibility
+                _error.Projected = _derivative * error;
+
+                error = 0;
+                // error responsibilities from all the connections gated by this neuron
+                for (var id = 0; id < _trace.Extended.Count; id++)
+                {
+                    var neuron = Neighbors[id]; // gated neuron
+                    var influence = neuron.SelfConnection.Gater == this ? neuron.Old : 0; // if gated neuron's selfconnection is gated by this neuron
+
+                    // index runs over all the connections to the gated neuron that are gated by this neuron
+                    for (var input = 0; input < _trace.Influences[id].Count; input++)
+                    { // captures the effect that the input connection of this neuron have, on a neuron which its input/s is/are gated by this neuron
+                        influence += _trace.Influences[id][input].Weight * _trace.Influences[
+                          neuron.Id][input].Source.Activation;
+                    }
+                    // eq. 22
+                    error += neuron.Error.Responsibility * influence;
+                }
+
+                // gated error responsibility
+                Error.Gated = _derivative * error;
+
+                // error responsibility - Eq. 23
+                Error.Responsibility = Error.Projected + Error.Gated;
+            }
+
+            // adjust all the neuron's incoming connections
+            for (var id = 0; id < _connections.Inputs.Count; id++)
+            {
+                var input = _connections.Inputs[id];
+
+                // Eq. 24
+                var gradient = _error.Projected * _trace.Eligibility[input.Id];
+                for (var id2 = 0; id2 < _trace.Extended.Count; id2++)
+                {
+                    var neuron = Neighbors[id2];
+                    gradient += neuron.Error.Responsibility * _trace.Extended[neuron.Id][input.Id];
+                }
+                input.Weight += rate * gradient; // adjust weights - aka learn
+            }
+
+            // adjust bias
+            _bias += rate * _error.Responsibility;
         }
 
         public void Project()

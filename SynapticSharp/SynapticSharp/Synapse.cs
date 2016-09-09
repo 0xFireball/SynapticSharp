@@ -19,7 +19,7 @@ namespace SynapticSharp
         public Neuron Target => _targetNeuron;
         public Neuron Gater => _gater;
         public double Gain { get { return _gain; } set { _gain = value; } }
-        public double Weight => _weight;
+        public double Weight { get { return _weight; } set { _weight = value; } }
 
         public Synapse(Neuron sourceNeuron, Neuron targetNeuron)
         {

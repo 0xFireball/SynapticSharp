@@ -6,5 +6,6 @@ namespace SynapticSharp.NeuronProperties
     {
         public List<Synapse> Inputs { get; set; }
         public List<Synapse> Gated { get; set; }
+        public List<Synapse> Projected { get; set; }
     }
 }
