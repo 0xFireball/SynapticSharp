@@ -201,7 +201,7 @@ namespace SynapticSharp
             Synapse connection; //the new connection
 
             // check if connection already exists
-            var connected = this.Connected(targetNeuron);
+            var connected = Connected(targetNeuron);
             if (connected != null && connected.Type == ConnectedNeuronType.Projected)
             {
                 // update connection
@@ -231,7 +231,39 @@ namespace SynapticSharp
             return connection;
         }
 
-        protected ConnectedNeuronLocation Connected(Neuron targetNeuron)
+        public void Gate(Synapse connection)
+        {
+            // add connection to gated list
+            Connections.Gated[connection.Id] = connection;
+
+            var neuron = connection.Target;
+            if (!(Trace.Extended.ContainsKey(neuron.Id)))
+            {
+                // extended trace
+                _neighbors[neuron.Id] = neuron;
+                var xtrace = _trace.Extended[neuron.Id] = new Dictionary<int, double>();
+                for (var id = 0; id < _connections.Inputs.Count; id++)
+                {
+                    var input = _connections.Inputs[id];
+                    xtrace[input.Id] = 0;
+                }
+            }
+
+            // keep track
+            if (Trace.Influences.ContainsKey(neuron.Id))
+            {
+                _trace.Influences[neuron.Id].Add(connection);
+            }
+            else
+            {
+                _trace.Influences[neuron.Id] = new List<Synapse> { connection };
+            }
+
+            // set gater
+            connection.Gater = this;
+        }
+
+        private ConnectedNeuronLocation Connected(Neuron targetNeuron)
         {
             var result = new ConnectedNeuronLocation();
             if (this == targetNeuron)
